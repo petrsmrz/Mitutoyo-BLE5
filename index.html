@@ -1,47 +1,34 @@
 
 <html>
   <head>
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   </head>
   <body>
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
     <h1>Sylvac S_Cal EVO caliper IP67</h1>
-    <h2>
-    <p id="demo"></p>
-    </h2>
-    <h2>
-      <p id="demo2"></p>
-      </h2>
-<button onclick="connectBTNew()">Click me</button>
+    <h2><p id="display"></p></h2>
+
+<button onclick="connectBTNew()">Connect BT</button>
 <button onclick="addNewRow();">Add row</button>
-<button onclick="addNewData('somedata');">Add some data</button>
 <p>
-<button onclick="onBatteryButtonClick()">Click me for Battery Demo</button>
-<p> 
  
 
-
-
-
-  <table class="table" id="table">
-    <tr id="datarow"></tr>
+  <table class="table table-striped table-bordered table-hover table-condensed" id="table">
+    <tr id="datarow"><td>1</td></td></tr>
   </table>
 
   <hr>
-  <pre id="log">7a</pre>
+  <pre id="log">Ver: 7l</pre>
 
+</p>
 
 <script>
-
-document.getElementById("demo").innerHTML = "Hello JavnnnaScript!";
+  window.line = 1;
+  window.maxcol = 1;
+  window.curcol = 1;
+  document.getElementById("display").innerHTML = " 000.00";
 </script> 
     
     <script>
@@ -49,178 +36,138 @@ document.getElementById("demo").innerHTML = "Hello JavnnnaScript!";
           function log(a) {
             document.getElementById("log").innerHTML += "\n"+a;
           }
-          async function onBatteryButtonClick() {
-            try {
-              log('Requesting Bluetooth Device...');
-              const device = await navigator.bluetooth.requestDevice({
-                  filters: [{services: ['battery_service']}] });
-
-              log('Connecting to GATT Server...');
-              const server = await device.gatt.connect();
-
-              log('Getting Battery Service...');
-              const service = await server.getPrimaryService('battery_service');
-
-              log('Getting Battery Level Characteristic...');
-              const characteristic = await service.getCharacteristic('battery_level');
-
-              log('Reading Battery Level...');
-              const value = await characteristic.readValue();
-
-              log('> Battery Level is ' + value.getUint8(0) + '%');
-            } catch(error) {
-              log('Argh! ' + error);
-            }
-          }
+        
 
           async function connectBTNew() {
             try {
-              log("requesting caliper device");
-              //const device = await navigator.bluetooth.requestDevice({filters: [{ services: ['c1b25000-caaf-6d0e-4c33-7dae30052840'] }] });
-              const device = await navigator.bluetooth.requestDevice( {acceptAllDevices: true,  optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']} );
-              log("got device " + device.name);
+              log("Requesting caliper device");
+
+              //const options = {filters: [{ services: ['c1b25000-caaf-6d0e-4c33-7dae30052840']}]}
+              const options = {filters: [{ name: 'SY295'}], optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']};
+              const device = await navigator.bluetooth.requestDevice(options);
+              //const device = await navigator.bluetooth.requestDevice( {acceptAllDevices: true,  optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']} );
+              log("Got device " + device.name);
+              console.log(device);
+
               log('Connecting to GATT Server...');
               const server = await device.gatt.connect();
 
               log('Getting caliper Service...');
               const service = await server.getPrimaryService('c1b25000-caaf-6d0e-4c33-7dae30052840');
-              log(service);
+              log("Got service");
+              console.log(service);
 
               const notif_characteristics = await service.getCharacteristic("c1b25013-caaf-6d0e-4c33-7dae30052840");
-              log("notif char", notif_characteristics); 
+              log("Notification chararacteristics " + JSON.stringify( notif_characteristics ) );
+
               await notif_characteristics.startNotifications();
-              log("notifications started")
+              log("Notifications started")
               notif_characteristics.addEventListener('characteristicvaluechanged', handleNotif);
 
               const indic_characteristics = await service.getCharacteristic("c1b25010-caaf-6d0e-4c33-7dae30052840");
-              log("indic_characteristics", indic_characteristics); 
-              await indic_characteristics.startNotifications();
-              log("indic_characteristics notification started")
-              indic_characteristics.addEventListener('characteristicvaluechanged', handleInd);
+              log("Indication characteristics"+  JSON.stringify(indic_characteristics)); 
 
+              await indic_characteristics.startNotifications();
+              log("Indication characteristics notifications started")
+              indic_characteristics.addEventListener('characteristicvaluechanged', handleInd);
 
               const characteristic = await service.getCharacteristic("c1b25012-caaf-6d0e-4c33-7dae30052840");
               var enc = new TextEncoder("utf-8");
-              characteristic.writeValue(enc.encode("?\r"));
+              //characteristic.writeValue(enc.encode("?\r"));
               window.btch = characteristic;
 
-              // setInterval(function(){ 
-              //   console.log("tick"); 
-              //   characteristic.writeValue(enc.encode("?\r")); 
-              // }, 1000);
+              setInterval(function(){ 
+                //console.log("tick"); 
+                characteristic.writeValue(enc.encode("?\r")); 
+              }, 300);
 
             } catch(error) {
-              log('Argh! ' + error);
+              log('Error: ' + error);
             }
           }
-      function connectBT_old() {
-        console.log("testik");
-        navigator.bluetooth.requestDevice({acceptAllDevices: true,  optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']})
-          .then(device => {
-          // Human-readable name of the device.
-          console.log(device.name);
-
-          // Attempts to connect to remote GATT Server.
-          return device.gatt.connect();
-          })
-          .then(server => { console.log("server ", server); 
-            return server.getPrimaryService("c1b25000-caaf-6d0e-4c33-7dae30052840");})
-          .then(service => {
-            console.log("service ", service); 
-
-            service.getCharacteristic("c1b25013-caaf-6d0e-4c33-7dae30052840")
-              .then(ch =>{ console.log("notif char", ch); 
-                    ch.startNotifications();
-                    ch.addEventListener('characteristicvaluechanged',
-                                  handleNotif); });
-            // Getting Battery Level Characteristic...
-            return service.getCharacteristic("c1b25012-caaf-6d0e-4c33-7dae30052840");
-          })
-          .then(characteristic => {
-       
-            console.log("characteristic ", characteristic); 
-            var enc = new TextEncoder("utf-8");
-            console.log(enc.encode("This is a string converted to a Uint8Array"));
-
-            setInterval(function(){ console.log("tick"); 
-            console.log("char", characteristic);
-            //characteristic.writeValue(enc.encode("?\r")); 
-            characteristic.writeValue(enc.encode("?\r")); 
-            }
-            , 1000);
-
-            return characteristic.writeValue(enc.encode("?\r"));
-          })
-          .catch(error => { console.log(error); });
-
-      }
+      
+    
       function handleNotif(event) {
-        console.log("notified");
-        console.log(event);
         let value = event.target.value;
-        let a = [];
-        // Convert raw data bytes to hex values just for the sake of showing something.
-        // In the "real" world, you'd use data.getUint8, data.getUint16 or even
-        // TextDecoder to process raw data bytes.
-        for (let i = 0; i < value.byteLength; i++) {
-          a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
-        }
-        console.log('> ' + a.join(' '));
         var decoder = new TextDecoder("utf-8");
         var decodedString = decoder.decode(value);
-        console.log(decodedString);
-        document.getElementById("demo").innerHTML = decodedString;
+        //console.log("Read value: " + decodedString);
+        document.getElementById("display").innerHTML = decodedString;
       }
-      function addNewRow() {
-        document.getElementById('datarow')
-          .insertAdjacentHTML('afterend', '<tr id="newrow"></row>');
-        datarow = document.getElementById("datarow");
-        newrow = document.getElementById("newrow");
-        datarow.removeAttribute('id');
-        newrow.setAttribute("id", "datarow");
+
+      function addMissingColumns()
+      {
+        Array.from(document.getElementById("table").getElementsByTagName("TR")).forEach(
+            function (tr) { 
+              //console.log(tr, window.maxcol-Array.from(tr.cells).length); 
+              
+
+              cellCount = Array.from(tr.cells).length;
+              //console.log(window.maxcol, window.curcol, Array.from(tr.cells).length);
+              for(i=0;i<(window.maxcol-cellCount);i++ ) {
+                tr.innerHTML += "<td></td>"
+              } 
+            }
+        );
       }
+
       function addNewData(datastr) {
+        if (window.curcol > 7) {
+          addNewRow();}
+          else beep();
+
         document.getElementById("datarow").innerHTML += "<td>"+datastr+"</td>";
+        window.curcol += 1;
+        if (window.curcol>window.maxcol) {
+          console.log("review column count. new maxcol ", window.curcol);
+          window.maxcol = window.curcol;
+          addMissingColumns();
+        }
+    
+      }
+    function beep2() {
+      new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'+Array(1e3).join(123)).play();  
+   
+    }
+
+      function beep() {
+        var snd = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");  
+        snd.play();
       }
 
       function handleInd(event) {
-        
         let value = event.target.value;
-        
         var decoder = new TextDecoder("utf-8");
         var decodedString = decoder.decode(value);
-        log(decodedString);
+        //log("Button pressed for " + decodedString);
         
-        log("deciding on "+ JSON.stringify(parseInt(decodedString.substring(1) )) );
-        log("deciding on "+ JSON.stringify(parseInt(decodedString.substring(1) )>=70) );
+        //log("deciding on "+ JSON.stringify(parseInt(decodedString.substring(1) )) );
+        //log("deciding on "+ JSON.stringify(parseInt(decodedString.substring(1) )>=70) );
+        
+        // add new line above 70 mm
         if (parseInt(decodedString.substring(1) )>=70) {
           addNewRow(); 
           return;
         }
 
-
-        document.getElementById("datarow").innerHTML += "<td>"+decodedString+"</td>";
-  
+        addNewData(decodedString);
       }  
 
-      function handleInd_old(event) {
-        log("handleInd");
-        log(JSON.stringify(event));
-        let value = event.target.value;
-        let a = [];
-        // Convert raw data bytes to hex values just for the sake of showing something.
-        // In the "real" world, you'd use data.getUint8, data.getUint16 or even
-        // TextDecoder to process raw data bytes.
-        for (let i = 0; i < value.byteLength; i++) {
-          a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
-        }
-        console.log('> ' + a.join(' '));
+      function addNewRow() {
+        beep2();
+        addMissingColumns(); 
 
-        var decoder = new TextDecoder("utf-8");
-        var decodedString = decoder.decode(value);
-        log(decodedString);
-        document.getElementById("demo2").innerHTML = decodedString;
+        window.line += 1;
+        window.curcol = 1;
+        document.getElementById('datarow')
+          .insertAdjacentHTML('afterend', '<tr id="newrow"><td>' + window.line.toString() + '</td></row>');
+        datarow = document.getElementById("datarow");
+        newrow = document.getElementById("newrow");
+        datarow.removeAttribute('id');
+        newrow.setAttribute("id", "datarow");
+        newrow.scrollIntoView();
       }
+
     </script>
   </body>
  </html>
