@@ -57,7 +57,7 @@
               log("Got service");
               console.log(service);
 
-              const notif_characteristics = await service.getCharacteristic("c1b25013-caaf-6d0e-4c33-7dae30052840");
+              const notif_characteristics = await service.getCharacteristic("c1b25010-caaf-6d0e-4c33-7dae30052840");
               log("Notification chararacteristics " + JSON.stringify( notif_characteristics ) );
 
               await notif_characteristics.startNotifications();
@@ -71,7 +71,7 @@
               log("Indication characteristics notifications started")
               indic_characteristics.addEventListener('characteristicvaluechanged', handleInd);
 
-              const characteristic = await service.getCharacteristic("c1b25012-caaf-6d0e-4c33-7dae30052840");
+              const characteristic = await service.getCharacteristic("c1b25010-caaf-6d0e-4c33-7dae30052840");
               var enc = new TextEncoder("utf-8");
               //characteristic.writeValue(enc.encode("?\r"));
               window.btch = characteristic;
