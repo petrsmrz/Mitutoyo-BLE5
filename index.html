@@ -68,7 +68,7 @@
               //log("Indication characteristics"+  JSON.stringify(indic_characteristics)); 
 
               await indic_characteristics.startNotifications();
-              log("Instrument Connected")
+              log("Instrument: Connected")
               indic_characteristics.addEventListener('characteristicvaluechanged', handleInd);
              
 
