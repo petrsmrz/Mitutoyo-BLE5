@@ -1,2 +1,2 @@
-# Sylvac_EVO
-Sylvac_Caliper
+# Mitutoyo Caliper
+Mitutoyo_Caliper
