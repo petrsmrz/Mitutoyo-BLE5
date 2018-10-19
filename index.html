@@ -68,9 +68,9 @@
               //log("Indication characteristics"+  JSON.stringify(indic_characteristics)); 
 
               await indic_characteristics.startNotifications();
-              //log("Indication characteristics notifications started")
+              log("Instrument Connected")
               indic_characteristics.addEventListener('characteristicvaluechanged', handleInd);
-              console.log("Instrument Connected");
+             
 
               const characteristic = await service.getCharacteristic("c1b25010-caaf-6d0e-4c33-7dae30052840");
               var enc = new TextEncoder("utf-8");
