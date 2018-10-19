@@ -46,8 +46,11 @@
               const options = {filters: [{ name: 'SY-Mitutoyo'}], optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']};
               const device = await navigator.bluetooth.requestDevice(options);
               //const device = await navigator.bluetooth.requestDevice( {acceptAllDevices: true,  optionalServices: ['c1b25000-caaf-6d0e-4c33-7dae30052840']} );
-              log("Instrument: " + device.name + " CODE: 500-161-30");
+              log("Instrument: " + device.name);
               console.log(device);
+              log("Type: Caliper");
+              log("CODE: 500-161-30");
+              
 
               //log('Connecting to GATT Server...');
               const server = await device.gatt.connect();
